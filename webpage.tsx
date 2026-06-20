@@ -1252,5 +1252,4 @@ const MainLayout = () => {
         </footer>
       )}
     </div>
-  );
 };
