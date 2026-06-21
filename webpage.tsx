@@ -754,6 +754,18 @@ const Contact = () => {
       <FadeIn className="w-full">
         <SectionTitle title="Contact" subtitle="Initiate a Conversation" />
         
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-10 sm:mb-12">
+          <a href="mailto:nandanjavagal444@gmail.com" className="flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#0a0a0a] border border-white/10 rounded-full text-white/70 hover:text-white hover:bg-white/5 hover:border-white/30 transition-all text-xs sm:text-sm font-medium tracking-wide">
+            <Mail className="w-4 h-4" /> nandanjavagal444@gmail.com
+          </a>
+          <a href="https://www.linkedin.com/in/nandan-javagal" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#0a0a0a] border border-white/10 rounded-full text-white/70 hover:text-white hover:bg-white/5 hover:border-white/30 transition-all text-xs sm:text-sm font-medium tracking-wide">
+            <Linkedin className="w-4 h-4" /> LinkedIn
+          </a>
+          <a href="https://github.com/Nandan-2004" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-[#0a0a0a] border border-white/10 rounded-full text-white/70 hover:text-white hover:bg-white/5 hover:border-white/30 transition-all text-xs sm:text-sm font-medium tracking-wide">
+            <Github className="w-4 h-4" /> GitHub
+          </a>
+        </div>
+
         <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 sm:p-12 shadow-2xl relative overflow-hidden w-full">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
