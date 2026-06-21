@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
+import logo from './logo.png';
 import { 
   ArrowRight, Github, Linkedin, Mail, ExternalLink, 
   ChevronRight, Terminal, Database, Code2, 
@@ -1290,7 +1291,7 @@ const MainLayout = () => {
         >
           {!imgError ? (
             <img 
-              src="logo.png" 
+              src={logo}
               alt="NJ Logo" 
               className="h-5 sm:h-6 w-auto object-contain group-hover:scale-105 transition-transform"
               onError={() => setImgError(true)}
