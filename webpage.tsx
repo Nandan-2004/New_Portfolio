@@ -241,8 +241,6 @@ const ResumeContent = () => {
       <div className="border-b-2 border-black pb-4 mb-6 text-center sm:text-left">
         <h1 className="text-3xl sm:text-4xl font-bold uppercase tracking-tight mb-2 text-black">Nandan Javagal</h1>
         <div className="flex flex-wrap justify-center sm:justify-start gap-3 sm:gap-4 text-xs sm:text-sm font-medium text-gray-700">
-          <span>+91-8277208861</span>
-          <span className="hidden sm:inline">•</span>
           <a href="mailto:nandanjavagal444@gmail.com" className="text-blue-600 hover:underline">nandanjavagal444@gmail.com</a>
           <span className="hidden sm:inline">•</span>
           <a href="https://www.linkedin.com/in/nandan-javagal" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">LinkedIn</a>
