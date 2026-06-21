@@ -1082,13 +1082,6 @@ const AdminPanel = () => {
             <button className="md:hidden text-zinc-400 hover:text-white" onClick={() => setSidebarOpen(true)}>
               <LayoutDashboard className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-3">
-              <img src={logo} alt="NJ Logo" className="h-7 w-auto object-contain" />
-              <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-white">Nandan&apos;s Portfolio</p>
-                <p className="text-[11px] text-zinc-400">Admin Workspace</p>
-              </div>
-            </div>
             <div className="hidden sm:flex items-center gap-2 text-sm text-zinc-400 bg-zinc-900/50 px-3 py-1.5 rounded-md border border-neutral-800 w-64">
               <Search className="w-4 h-4" /> <span className="text-xs">Search workspace...</span>
             </div>
