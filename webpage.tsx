@@ -2,8 +2,9 @@ import React, { useState, useEffect, useContext, createContext, useRef } from 'r
 import { 
   ArrowRight, Github, Linkedin, Mail, ExternalLink, 
   ChevronRight, Terminal, Database, Code2, 
-  Layers, Lock, CheckCircle2, X, Plus, Trash2, Edit2, Mic, Play, Sparkles, User, FileText, Briefcase
+  Layers, Lock, CheckCircle2, X, Plus, Trash2, Edit2, Sparkles, FileText, Briefcase
 } from 'lucide-react';
+
 const initialData = {
   projects: [
     {
@@ -12,7 +13,8 @@ const initialData = {
       category: 'AI & Automation',
       description: 'Automated preprocessing, model selection, training, and evaluation pipeline for deployable ML models. Presented at ECMI 2026 IEEE International Conference.',
       tech: ['Python', 'Machine Learning', 'AutoML', 'Data Pipelines'],
-      link: '#'
+      link: '#',
+      liveUrl: 'https://github.com/nandan/vertexml'
     },
     {
       id: 2,
@@ -83,6 +85,55 @@ const initialData = {
       icon: <Database className="w-5 h-5" />
     }
   ]
+};
+
+// --- Gemini API Helper ---
+const generateWithGemini = async (prompt, isJson = false, systemInstruction = "") => {
+  const apiKey = ""; // Left empty as per Canvas runtime requirements
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+  const payload = {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+  };
+
+  if (systemInstruction) {
+    payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+  }
+
+  if (isJson) {
+    payload.generationConfig = {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          excerpt: { type: "STRING" },
+          tags: { type: "STRING" },
+          readTime: { type: "STRING" }
+        }
+      }
+    };
+  }
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    // Safety check: Prevent app crash if API key is missing or fails
+    if (!text) {
+      console.warn("API Error or Missing Key. Gemini Response:", data);
+      return null; 
+    }
+
+    return isJson ? JSON.parse(text) : text;
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return null;
+  }
 };
 
 const AppContext = createContext();
@@ -159,11 +210,10 @@ const SectionTitle = ({ title, subtitle }) => (
 
 const NavBar = () => {
   const { currentPath, navigate } = useContext(AppContext);
-  const navLinks = ['Home', 'About', 'Projects', 'Blog'];
+  const navLinks = ['Home', 'About', 'Projects', 'Blog', 'Contact'];
 
   return (
     <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-fade-down">
-      {/* Sleek, glowing container */}
       <div className="flex bg-[#0a0a0a]/60 backdrop-blur-xl p-1.5 rounded-full border border-white/20 relative shadow-[0_0_40px_rgba(255,255,255,0.2)] transition-all duration-500">
         {navLinks.map((link) => {
           const path = link.toLowerCase();
@@ -234,7 +284,7 @@ const ResumeContent = () => {
             <span className="text-sm">On-site Internship</span>
           </div>
           <ul className="list-disc list-inside text-sm text-black space-y-1">
-            <li>Involved in supporting software development tasks and building end products</li>
+            <li>Involved in supporting software development tasks and building end products for government infrastructure.</li>
           </ul>
         </div>
 
@@ -248,7 +298,7 @@ const ResumeContent = () => {
             <span className="text-sm">Remote Internship</span>
           </div>
           <ul className="list-disc list-inside text-sm text-black space-y-1">
-            <li>Contributed to projects in artificial intelligence and machine learning.</li>
+            <li>Contributed to core projects in artificial intelligence, machine learning, and data processing.</li>
           </ul>
         </div>
       </div>
@@ -342,13 +392,13 @@ const Home = () => {
   return (
     <div className="relative min-h-screen flex flex-col justify-center pt-20 overflow-hidden bg-[#050505]">
       
-      {/* Cinematic Video Background - Brightened for visibility */}
+      {/* Cinematic Video Background */}
       <video
         autoPlay loop muted playsInline
         src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260314_131748_f2ca2a28-fed7-44c8-b9a9-bd9acdd5ec31.mp4"
         className="absolute inset-0 w-full h-full object-cover z-0 opacity-60 pointer-events-none grayscale-[10%]"
       />
-      {/* Lighter overlays to let video shine through while keeping text readable */}
+      {/* Overlays */}
       <div className="absolute inset-0 bg-[#050505]/30 z-0 pointer-events-none" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/10 to-[#050505]/90 z-0 pointer-events-none" />
 
@@ -365,19 +415,19 @@ const Home = () => {
           Building intelligent systems that transform data into real-world solutions.
         </p>
 
-        <div className="flex flex-wrap justify-center gap-6 mt-12 animate-fade-rise delay-300">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mt-12 animate-fade-rise delay-300 w-full sm:w-auto">
           <button 
             onClick={() => navigate('projects')}
-            className="group relative px-8 py-4 bg-white text-black rounded-full text-sm tracking-widest font-bold uppercase overflow-hidden"
+            className="group relative px-8 py-4 bg-white text-black rounded-full text-sm tracking-widest font-bold uppercase overflow-hidden w-full sm:w-auto"
           >
-            <span className="relative z-10 flex items-center gap-2">
+            <span className="relative z-10 flex items-center justify-center gap-2">
               See the work
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>
           <button 
             onClick={() => navigate('contact')}
-            className="group px-8 py-4 bg-transparent border border-white/20 text-white rounded-full text-sm tracking-widest font-bold uppercase hover:bg-white/5 transition-colors"
+            className="group px-8 py-4 bg-transparent border border-white/20 text-white rounded-full text-sm tracking-widest font-bold uppercase hover:bg-white/5 transition-colors w-full sm:w-auto"
           >
             Contact Me
           </button>
@@ -392,37 +442,66 @@ const About = () => {
   const [showCV, setShowCV] = useState(false);
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-6 sm:px-10 max-w-6xl mx-auto">
+    <div className="min-h-screen pt-32 pb-20 px-6 sm:px-10 max-w-7xl mx-auto">
       <FadeIn>
         <SectionTitle title="About" subtitle="The Architecture Behind the Engineer" />
       </FadeIn>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
-        {/* Left Column: Bio */}
+        {/* Left Column: Bio & Skills */}
         <div className="lg:col-span-7 space-y-8">
           <FadeIn delay={100}>
             <p className="text-xl md:text-3xl font-serif leading-relaxed text-white/90">
               I am an AI & ML Engineer specializing in transforming complex data into 
-              automated, deployable systems. From predictive modeling to real-time object detection.
-            </p>
+              automated, deployable systems. From predictive modeling to real-time object detection models.
+            </p>  
           </FadeIn>
           
           <FadeIn delay={200}>
             <p className="text-white/50 text-base md:text-lg leading-relaxed font-light">
               Currently pursuing a B.E. in Computer Science (AI & ML) at Malnad College of Engineering, 
               my work lives at the intersection of research and real-world application. I've engineered 
-              automated pipelines like VertexML and AI-driven news systems, ensuring AI doesn't just stay in a Jupyter notebook—it scales.
+              automated pipelines like VertexML and AI-driven news systems, ensuring AI doesn't just stay in a notebook—it scales.
             </p>
+          </FadeIn>
+
+          {/* Technical Arsenal / Skills Section */}
+          <FadeIn delay={250} className="pt-8">
+            <h3 className="text-white/80 text-xs font-bold tracking-widest uppercase mb-6 flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-blue-400" /> Technical Arsenal
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-white/40 text-[10px] uppercase tracking-widest mb-3 font-mono">AI & Machine Learning</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Deep Learning', 'NLP', 'Computer Vision', 'YOLOv8', 'AutoML', 'Pandas', 'NumPy'].map(skill => (
+                    <span key={skill} className="px-3 py-1.5 bg-[#111] border border-white/10 rounded-lg text-xs text-white/70 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all cursor-default">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-white/40 text-[10px] uppercase tracking-widest mb-3 font-mono">Engineering & Tools</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Python', 'N8N Automation', 'Streamlit', 'Git', 'HTML/CSS', 'IoT (ESP32)'].map(skill => (
+                    <span key={skill} className="px-3 py-1.5 bg-[#111] border border-white/10 rounded-lg text-xs text-white/70 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all cursor-default">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </FadeIn>
 
           <FadeIn delay={300} className="pt-8 flex flex-col sm:flex-row gap-6 border-t border-white/10">
             {/* View CV Button -> Opens Local HTML Modal */}
             <button 
               onClick={() => setShowCV(true)}
-              className="group flex items-center gap-3 px-6 py-4 bg-[#111] border border-white/10 rounded-xl hover:bg-white/5 hover:border-white/20 transition-all text-white font-medium"
+              className="group flex items-center gap-3 px-6 py-4 bg-[#111] border border-white/10 rounded-xl hover:bg-white/5 hover:border-white/20 transition-all text-white font-medium w-full sm:w-auto"
             >
               <FileText className="w-5 h-5 text-white/60 group-hover:text-white" />
-              <span>View Full Resumé</span>
+              <span>View Full Resume</span>
               <ExternalLink className="w-4 h-4 ml-auto text-white/40 group-hover:translate-x-1 transition-all" />
             </button>
           </FadeIn>
@@ -481,6 +560,7 @@ const About = () => {
 
 const Projects = () => {
   const { data } = useContext(AppContext);
+  const [selectedProject, setSelectedProject] = useState(null);
 
   return (
     <div className="min-h-screen pt-32 pb-20 px-6 sm:px-10 max-w-7xl mx-auto">
@@ -491,7 +571,10 @@ const Projects = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {data.projects.map((project, index) => (
           <FadeIn key={project.id} delay={index * 100}>
-            <div className="group h-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 hover:bg-[#111] transition-all duration-500 hover:-translate-y-2 relative overflow-hidden flex flex-col">
+            <div 
+              onClick={() => setSelectedProject(project)}
+              className="group h-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 hover:bg-[#111] transition-all duration-500 hover:-translate-y-2 relative overflow-hidden flex flex-col cursor-pointer"
+            >
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[100px] -z-0 transition-transform group-hover:scale-110" />
               
               <div className="relative z-10 flex-1">
@@ -501,7 +584,7 @@ const Projects = () => {
                 <h3 className="text-2xl font-bold text-white mb-4 leading-tight group-hover:text-white/90 transition-colors">
                   {project.title}
                 </h3>
-                <p className="text-white/50 text-sm leading-relaxed mb-8">
+                <p className="text-white/50 text-sm leading-relaxed mb-8 line-clamp-3">
                   {project.description}
                 </p>
               </div>
@@ -521,20 +604,76 @@ const Projects = () => {
                 </div>
                 
                 <div className="flex items-center gap-6">
-                  <a href={project.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm font-bold tracking-widest uppercase text-white/60 group-hover:text-white transition-colors">
-                    Repo <ChevronRight className="w-4 h-4 ml-1" />
-                  </a>
-                  {project.liveUrl && (
-                    <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm font-bold tracking-widest uppercase text-blue-400 hover:text-blue-300 transition-colors">
-                      Live <ExternalLink className="w-4 h-4 ml-1.5" />
-                    </a>
-                  )}
+                  <span className="inline-flex items-center text-sm font-bold tracking-widest uppercase text-white/60 group-hover:text-white transition-colors">
+                    View Details <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                  </span>
                 </div>
               </div>
             </div>
           </FadeIn>
         ))}
       </div>
+
+      {/* Project Detail Modal */}
+      {selectedProject && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+            onClick={() => setSelectedProject(null)} 
+          />
+          <div className="relative bg-[#050505] w-full max-w-3xl max-h-[90vh] rounded-2xl border border-white/20 shadow-2xl flex flex-col animate-fade-down overflow-hidden">
+            
+            <div className="flex justify-between items-center p-6 border-b border-white/10 bg-[#0a0a0a]">
+              <p className="text-white/40 text-xs tracking-widest font-mono uppercase">
+                {selectedProject.category}
+              </p>
+              <button 
+                onClick={() => setSelectedProject(null)}
+                className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-white/60 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 sm:p-10 overflow-y-auto custom-scrollbar flex-1">
+              <h3 className="text-3xl sm:text-4xl font-bold text-white mb-6 leading-tight">
+                {selectedProject.title}
+              </h3>
+              
+              <div className="prose prose-invert max-w-none mb-10">
+                <p className="text-white/70 text-lg leading-relaxed">
+                  {selectedProject.description}
+                </p>
+              </div>
+
+              <div className="mb-10">
+                <h4 className="text-white/40 text-xs font-bold tracking-widest uppercase mb-4">Technologies & Stack</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject.tech.map(tech => (
+                    <span key={tech} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-white/80">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4 pt-8 border-t border-white/10">
+                {selectedProject.link && selectedProject.link !== '#' && (
+                  <a href={selectedProject.link} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl text-sm font-bold tracking-widest uppercase transition-all flex items-center gap-2">
+                    <Github className="w-4 h-4" /> View Source
+                  </a>
+                )}
+                {selectedProject.liveUrl && (
+                  <a href={selectedProject.liveUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white text-black hover:bg-gray-200 rounded-xl text-sm font-bold tracking-widest uppercase transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                    <ExternalLink className="w-4 h-4" /> Live Demo
+                  </a>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -574,7 +713,7 @@ const Blog = () => {
                   <p className="text-white/50 text-base leading-relaxed mb-6 max-w-2xl">
                     {post.excerpt}
                   </p>
-                  <span className="inline-flex items-center text-sm font-bold tracking-widest uppercase text-white hover:underline decoration-white/30 underline-offset-4">
+                  <span className="inline-flex items-center text-sm font-bold tracking-widest uppercase text-white hover:underline decoration-white/30 underline-offset-4 cursor-pointer">
                     Read Article <ArrowRight className="w-4 h-4 ml-2 opacity-50" />
                   </span>
                 </div>
@@ -589,8 +728,12 @@ const Blog = () => {
 };
 
 const Contact = () => {
+  const { navigate } = useContext(AppContext);
   const [formState, setFormState] = useState({ name: '', message: '' });
   const [status, setStatus] = useState('idle');
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [showAiInput, setShowAiInput] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -614,48 +757,27 @@ const Contact = () => {
     }, 1000);
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center pt-32 pb-20 px-6 sm:px-10">
-      <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 lg:gap-24">
-        
-        <div>
-          <FadeIn>
-            <SectionTitle title="Initiate" subtitle="Start a conversation" />
-            <p className="text-xl md:text-2xl font-serif text-white/80 leading-relaxed mb-12">
-              Whether it's deploying scaleable AI pipelines, discussing research, or collaborating on a project—my inbox is open.
-            </p>
-            
-            <div className="space-y-6">
-              <a href="mailto:nandanjavgal444@gmail.com" className="flex items-center gap-6 group">
-                <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                  <Mail className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/40 text-xs font-bold tracking-widest uppercase mb-1">Email</p>
-                  <p className="text-white text-lg font-medium group-hover:text-white/80 transition-colors">
-                    nandanjavgal444@gmail.com
-                  </p>
-                </div>
-              </a>
-              <a href="#" className="flex items-center gap-6 group">
-                <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-[#0077b5]/20 transition-colors">
-                  <Linkedin className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-white/40 text-xs font-bold tracking-widest uppercase mb-1">LinkedIn</p>
-                  <p className="text-white text-lg font-medium group-hover:text-white/80 transition-colors">
-                    Nandan Javagal
-                  </p>
-                </div>
-              </a>
-            </div>
-          </FadeIn>
-        </div>
+  const handleAIDraft = async () => {
+    if (!aiPrompt) return;
+    setIsDrafting(true);
+    const prompt = `Draft a short, professional, and engaging inquiry email to Nandan (an AI & ML Engineer) based on these keywords: "${aiPrompt}". Keep it under 4 sentences. Do not include placeholders like [Your Name].`;
+    const result = await generateWithGemini(prompt, false);
+    
+    if (result) {
+      setFormState(prev => ({ ...prev, message: result }));
+      setShowAiInput(false);
+      setAiPrompt('');
+    }
+    setIsDrafting(false);
+  };
 
-        <FadeIn delay={200} className="relative">
-          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent rounded-3xl -z-10" />
-          <form onSubmit={handleSubmit} className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 sm:p-12 space-y-8 shadow-2xl">
-            
+  return (
+    <div className="min-h-screen pt-32 pb-20 px-6 sm:px-10 max-w-4xl mx-auto flex flex-col items-center">
+      <FadeIn className="w-full">
+        <SectionTitle title="Contact" subtitle="Initiate a Conversation" />
+        
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 sm:p-12 shadow-2xl relative overflow-hidden w-full">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-white/40 text-xs font-bold tracking-widest uppercase">Your Name</label>
               <input
@@ -669,7 +791,38 @@ const Contact = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-white/40 text-xs font-bold tracking-widest uppercase">Message</label>
+              <div className="flex justify-between items-end">
+                <label className="text-white/40 text-xs font-bold tracking-widest uppercase">Message</label>
+                <button 
+                  type="button" 
+                  onClick={() => setShowAiInput(!showAiInput)} 
+                  className="text-xs text-[#0077b5] flex items-center gap-1 hover:text-blue-400 transition-colors"
+                >
+                  <Sparkles className="w-3 h-3" /> Draft with AI
+                </button>
+              </div>
+
+              {showAiInput && (
+                <div className="flex flex-col sm:flex-row gap-3 mb-4 animate-fade-down bg-white/5 p-3 rounded-xl border border-white/10">
+                  <input 
+                    type="text" 
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="E.g. Want to collaborate on a computer vision project..." 
+                    className="flex-1 bg-transparent border-b border-white/20 px-2 py-2 text-white text-sm focus:outline-none focus:border-[#0077b5] transition-colors"
+                    onKeyDown={(e) => e.key === 'Enter' && handleAIDraft()}
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAIDraft}
+                    disabled={isDrafting || !aiPrompt}
+                    className="px-4 py-2 bg-[#0077b5]/20 text-[#0077b5] rounded-lg text-sm font-bold uppercase tracking-widest hover:bg-[#0077b5]/30 transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {isDrafting ? 'Generating...' : 'Generate'}
+                  </button>
+                </div>
+              )}
+
               <textarea
                 value={formState.message}
                 onChange={e => setFormState({...formState, message: e.target.value})}
@@ -681,83 +834,73 @@ const Contact = () => {
 
             <button
               type="submit"
-              disabled={status !== 'idle'}
-              className="w-full py-5 bg-white text-black font-bold uppercase tracking-widest text-sm rounded-xl hover:bg-white/90 transition-colors disabled:opacity-50 flex justify-center items-center gap-3"
+              className="w-full py-4 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-white/90 transition-colors flex justify-center items-center gap-2"
             >
-              {status === 'idle' ? 'Launch Email Client' : status === 'sending' ? 'Preparing...' : 'Ready to Send!'}
-              {status === 'sent' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+              {status === 'sending' ? 'Opening Mail Client...' : status === 'sent' ? 'Message Copied & Redirected!' : 'Send Message'}
             </button>
-            <p className="text-xs text-white/30 text-center font-mono">
-              (This will copy your message and open your email app)
-            </p>
           </form>
-        </FadeIn>
-
-      </div>
+        </div>
+      </FadeIn>
     </div>
   );
 };
 
 const AdminLogin = ({ onLogin, onCancel }) => {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simple client-side password check
-    if (password === 'admin123') {
+    if (password === 'admin123') { 
       onLogin();
     } else {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
+      setError('Invalid credentials.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex items-center justify-center px-6 relative">
-      <button 
-        onClick={onCancel}
-        className="absolute top-8 left-6 sm:left-10 flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-medium"
-      >
-        <ArrowRight className="w-4 h-4 rotate-180" /> Return to Site
-      </button>
-
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center px-6 font-sans">
+      <div className="w-full max-w-sm">
         <FadeIn>
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-            {/* Subtle glow effect */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-            
-            <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-5 h-5 text-white/80" />
-              </div>
-              <h2 className="text-2xl font-bold text-white tracking-tight mb-2">Restricted Access</h2>
-              <p className="text-sm text-white/40">Enter credentials to access the Command Center.</p>
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-10 h-10 bg-neutral-900 border border-neutral-800 rounded-lg flex items-center justify-center mb-4">
+              <Lock className="w-4 h-4 text-neutral-300" />
             </div>
+            <h2 className="text-xl font-medium text-white tracking-tight">Admin Authentication</h2>
+            <p className="text-sm text-neutral-500 mt-1">Sign in to manage your portfolio.</p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-6 shadow-2xl">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold tracking-widest uppercase text-white/40">Password</label>
+                <label className="text-neutral-400 text-xs font-medium uppercase tracking-wider">Master Password</label>
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(false); }}
-                  className={`w-full bg-transparent border ${error ? 'border-red-500/50 focus:border-red-500' : 'border-white/20 focus:border-white'} rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-1 ${error ? 'focus:ring-red-500' : 'focus:ring-white'} transition-all text-sm`}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all"
                   placeholder="••••••••"
                   autoFocus
+                  required
                 />
-                {error && <p className="text-xs text-red-400 mt-2 font-medium">Incorrect password. Please try again.</p>}
+                {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded-lg hover:bg-white/90 transition-colors flex justify-center items-center gap-2"
+                className="w-full py-2 bg-white text-black font-medium text-sm rounded-md hover:bg-neutral-200 transition-colors mt-2"
               >
-                Authenticate
+                Sign In
               </button>
             </form>
           </div>
+          
+          <button 
+            onClick={onCancel}
+            className="w-full mt-6 flex justify-center items-center gap-2 text-neutral-500 hover:text-white transition-colors text-xs font-medium"
+          >
+            <ArrowRight className="w-3 h-3 rotate-180" /> Back to public site
+          </button>
         </FadeIn>
       </div>
     </div>
@@ -766,9 +909,8 @@ const AdminLogin = ({ onLogin, onCancel }) => {
 
 const AdminPanel = () => {
   const { data, setData, navigate, isAdmin, setIsAdmin } = useContext(AppContext);
-  const [activeTab, setActiveTab] = useState('add');
-  const [manageType, setManageType] = useState('projects'); 
-  const [formType, setFormType] = useState('projects');
+  const [activeTab, setActiveTab] = useState('manage'); // 'add' or 'manage'
+  const [formType, setFormType] = useState('projects'); // 'projects', 'blog', 'experience'
   const [editingId, setEditingId] = useState(null);
   
   const getInitialFormState = (type) => {
@@ -781,6 +923,7 @@ const AdminPanel = () => {
   const [formData, setFormData] = useState(getInitialFormState('projects'));
   const [isGenerating, setIsGenerating] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [rawContent, setRawContent] = useState('');
 
   const showNotification = (msg) => {
     setNotification(msg);
@@ -791,12 +934,13 @@ const AdminPanel = () => {
     setFormType(type);
     setFormData(getInitialFormState(type));
     setEditingId(null);
+    setRawContent('');
+    setActiveTab('manage'); // Default back to manage view when switching types
   };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
     
-    // Process comma-separated strings into arrays for tech/tags
     const processedData = { ...formData };
     if (formType === 'projects' && typeof processedData.tech === 'string') {
       processedData.tech = processedData.tech.split(',').map(t => t.trim()).filter(t => t);
@@ -806,14 +950,12 @@ const AdminPanel = () => {
     }
 
     if (editingId) {
-      // Update existing item
       setData(prev => ({
         ...prev,
         [formType]: prev[formType].map(item => item.id === editingId ? { ...item, ...processedData } : item)
       }));
-      showNotification("Record updated successfully");
+      showNotification("Record updated successfully.");
     } else {
-      // Add new item
       const newItem = {
         id: Date.now(),
         ...processedData,
@@ -823,195 +965,255 @@ const AdminPanel = () => {
         ...prev,
         [formType]: [newItem, ...prev[formType]]
       }));
-      showNotification("New record created");
+      showNotification("New record created.");
     }
     
     setFormData(getInitialFormState(formType));
     setEditingId(null);
+    setActiveTab('manage');
   };
 
-  const handleEditClick = (type, item) => {
-    setFormType(type);
+  const handleEditClick = (item) => {
     setEditingId(item.id);
-    
-    // Prepare data for the form (convert arrays back to strings for inputs)
     const formPopulate = { ...item };
-    if (type === 'projects' && Array.isArray(formPopulate.tech)) {
+    if (formType === 'projects' && Array.isArray(formPopulate.tech)) {
       formPopulate.tech = formPopulate.tech.join(', ');
     }
-    if (type === 'blog' && Array.isArray(formPopulate.tags)) {
+    if (formType === 'blog' && Array.isArray(formPopulate.tags)) {
       formPopulate.tags = formPopulate.tags.join(', ');
     }
-    
     setFormData(formPopulate);
     setActiveTab('add'); 
   };
 
-  const handleDelete = (type, id) => {
-    // Direct deletion without browser native confirm popup for cleaner UI
+  const handleDelete = (id) => {
     setData(prev => ({
       ...prev,
-      [type]: prev[type].filter(item => item.id !== id)
+      [formType]: prev[formType].filter(item => item.id !== id)
     }));
-    showNotification("Record deleted permanently");
+    showNotification("Record deleted.");
   };
 
-  const simulateAISummary = () => {
+  const handleAIGeneration = async () => {
+    if (!rawContent) {
+      showNotification("Please paste some content first!");
+      return;
+    }
     setIsGenerating(true);
-    setTimeout(() => {
+    const prompt = `Article Content:\n${rawContent}`;
+    const systemPrompt = "Analyze the provided article. Return a JSON object with 'excerpt' (an engaging summary under 3 sentences), 'tags' (a single string of 3-5 comma separated tags relevant to the tech/topic), and 'readTime' (e.g. '5 min read' calculated based on word count).";
+    
+    const result = await generateWithGemini(prompt, true, systemPrompt);
+
+    if (result) {
       setFormData(prev => ({
         ...prev,
-        excerpt: "An auto-generated executive summary extracting key metrics and architectural patterns from the provided text.",
-        tags: "AI, GenAI, Pipeline",
-        readTime: "5 min read"
+        excerpt: result.excerpt || prev.excerpt,
+        tags: result.tags || prev.tags,
+        readTime: result.readTime || prev.readTime
       }));
-      setIsGenerating(false);
-      showNotification("Metadata auto-generated");
-    }, 1500);
+      showNotification("Metadata generated successfully.");
+    } else {
+      showNotification("AI Generation failed. Check API configuration.");
+    }
+    setIsGenerating(false);
   };
 
-  // If not authenticated, show login screen
   if (!isAdmin) {
-    return (
-      <AdminLogin 
-        onLogin={() => setIsAdmin(true)} 
-        onCancel={() => navigate('home')} 
-      />
-    );
+    return <AdminLogin onLogin={() => setIsAdmin(true)} onCancel={() => navigate('home')} />;
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] relative pt-20 pb-20 px-6 sm:px-10 font-sans">
+    <div className="min-h-screen bg-[#050505] flex flex-col md:flex-row font-sans text-neutral-200">
       
-      {/* Absolute positioned Back Button & Logout */}
-      <div className="absolute top-8 left-6 sm:left-10 right-6 sm:right-10 flex justify-between items-center z-50">
-        <button 
-          onClick={() => navigate('home')}
-          className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-medium"
-        >
-          <ArrowRight className="w-4 h-4 rotate-180" /> Return to Site
-        </button>
-        <button 
-          onClick={() => {
-            setIsAdmin(false);
-            navigate('home');
-          }}
-          className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-md transition-colors text-xs font-bold uppercase tracking-widest border border-red-500/20"
-        >
-          Logout
-        </button>
-      </div>
-
       {/* Top Banner Notification */}
       {notification && (
-        <div className="fixed top-6 right-6 bg-[#111] border border-white/10 text-white px-6 py-4 rounded-lg shadow-xl z-50 animate-fade-down flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-green-500" />
+        <div className="fixed top-6 right-6 bg-[#111] border border-neutral-800 text-white px-4 py-3 rounded-md shadow-2xl z-[60] flex items-center gap-3 animate-fade-down">
+          <CheckCircle2 className="w-4 h-4 text-green-500" />
           <span className="text-sm font-medium">{notification}</span>
         </div>
       )}
 
-      <div className="max-w-6xl mx-auto w-full mt-12">
-        <FadeIn>
-          <div className="mb-12 border-b border-white/10 pb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-3">
-              Content Management
-            </h1>
-            <p className="text-white/50 text-sm sm:text-base">
-              Manage your portfolio projects, experience, and blog entries.
-            </p>
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-64 bg-[#0a0a0a] border-r border-neutral-800 md:h-screen flex flex-col flex-shrink-0 z-10">
+        <div className="p-6 border-b border-neutral-800">
+          <h1 className="text-white font-semibold flex items-center gap-2">
+            <div className="w-6 h-6 bg-white rounded flex items-center justify-center">
+              <span className="text-black text-xs font-bold">NJ</span>
+            </div>
+            Command Center
+          </h1>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4 space-y-8">
+          <div>
+            <h2 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3 px-2">Collections</h2>
+            <nav className="space-y-1">
+              {[
+                { id: 'projects', label: 'Projects', icon: <Layers className="w-4 h-4" /> },
+                { id: 'blog', label: 'Blog Posts', icon: <FileText className="w-4 h-4" /> },
+                { id: 'experience', label: 'Experience', icon: <Briefcase className="w-4 h-4" /> }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => handleTypeChange(item.id)}
+                  disabled={editingId !== null}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    formType === item.id 
+                      ? 'bg-neutral-800/50 text-white' 
+                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/30 disabled:opacity-50'
+                  }`}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </nav>
           </div>
-        </FadeIn>
+        </div>
+        
+        <div className="p-4 border-t border-neutral-800">
+          <button 
+            onClick={() => { setIsAdmin(false); navigate('home'); }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-neutral-400 hover:text-white hover:bg-neutral-800/50 rounded-md text-sm font-medium transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </aside>
 
-        <FadeIn delay={100}>
-          {/* Main Tabs (Professional underline style) */}
-          <div className="flex gap-8 mb-8 border-b border-white/10">
-            <button 
-              onClick={() => setActiveTab('add')}
-              className={`pb-4 text-sm font-medium transition-all relative ${
-                activeTab === 'add' ? 'text-white' : 'text-white/40 hover:text-white/80'
-              }`}
-            >
-              {editingId ? 'Edit Record' : 'Create New'}
-              {activeTab === 'add' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white" />}
-            </button>
-            <button 
-              onClick={() => setActiveTab('manage')}
-              className={`pb-4 text-sm font-medium transition-all relative ${
-                activeTab === 'manage' ? 'text-white' : 'text-white/40 hover:text-white/80'
-              }`}
-            >
-              Manage Records
-              {activeTab === 'manage' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white" />}
-            </button>
+      {/* Main Workspace */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#050505]">
+        
+        {/* Top Header */}
+        <header className="h-16 border-b border-neutral-800 flex items-center justify-between px-8 flex-shrink-0 bg-[#0a0a0a]/50 backdrop-blur-sm z-10">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-medium text-white capitalize">{formType}</h2>
+            <span className="px-2.5 py-0.5 rounded-full bg-neutral-800 text-neutral-300 text-[10px] font-mono tracking-wide">
+              {data[formType]?.length || 0} entries
+            </span>
           </div>
+          <button 
+            onClick={() => navigate('home')}
+            className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors text-sm font-medium"
+          >
+            View Site <ExternalLink className="w-4 h-4" />
+          </button>
+        </header>
 
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 sm:p-10 shadow-2xl">
+        {/* Workspace Content */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <div className="max-w-4xl mx-auto">
             
-            {activeTab === 'add' && (
-              <div className="grid lg:grid-cols-[200px_1fr] gap-10 lg:gap-16">
-                <div>
-                  <h3 className="text-white/80 text-xs font-semibold tracking-wider uppercase mb-4">
-                    Content Type
-                  </h3>
-                  <div className="space-y-1">
-                    {['projects', 'blog', 'experience'].map(type => (
-                      <button
-                        key={type}
-                        onClick={() => handleTypeChange(type)}
-                        disabled={editingId !== null} 
-                        className={`w-full text-left px-4 py-3 rounded-lg transition-all text-sm font-medium capitalize flex items-center justify-between ${
-                          formType === type 
-                            ? 'bg-white/10 text-white' 
-                            : 'text-white/50 hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed'
-                        }`}
-                      >
-                        {type}
-                        {formType === type && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </button>
-                    ))}
-                  </div>
-                  {editingId && (
-                    <button 
-                      onClick={() => {
-                        setEditingId(null);
-                        setFormData(getInitialFormState(formType));
-                      }}
-                      className="mt-6 w-full px-4 py-3 border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
-                    >
-                      <X className="w-4 h-4" /> Cancel Edit
-                    </button>
+            {/* View Toggles (Manage / Add) */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex bg-[#0a0a0a] border border-neutral-800 p-1 rounded-lg">
+                <button 
+                  onClick={() => { setActiveTab('manage'); setEditingId(null); setFormData(getInitialFormState(formType)); }}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'manage' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  Manage
+                </button>
+                <button 
+                  onClick={() => setActiveTab('add')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                    activeTab === 'add' ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  {editingId ? 'Edit Record' : <><Plus className="w-3.5 h-3.5" /> Create New</>}
+                </button>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            {activeTab === 'manage' ? (
+              <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl overflow-hidden">
+                <div className="grid grid-cols-12 gap-4 p-4 border-b border-neutral-800 bg-neutral-900/20 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                  <div className="col-span-4">Title / Role</div>
+                  <div className="col-span-6">Description / Details</div>
+                  <div className="col-span-2 text-right">Actions</div>
+                </div>
+                
+                <div className="divide-y divide-neutral-800/50">
+                  {data[formType]?.map(item => (
+                    <div key={item.id} className="grid grid-cols-12 gap-4 p-4 items-center group hover:bg-neutral-800/20 transition-colors">
+                      <div className="col-span-4">
+                        <p className="text-sm font-medium text-white truncate">{item.title || item.role}</p>
+                        {item.date || item.period ? <p className="text-xs text-neutral-500 mt-0.5">{item.date || item.period}</p> : null}
+                      </div>
+                      <div className="col-span-6">
+                        <p className="text-sm text-neutral-400 truncate">{item.description || item.excerpt || item.company}</p>
+                      </div>
+                      <div className="col-span-2 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleEditClick(item)}
+                          className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(item.id)}
+                          className="p-1.5 text-neutral-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {(!data[formType] || data[formType].length === 0) && (
+                    <div className="p-12 text-center text-neutral-500 text-sm">
+                      No records found. Click "Create New" to add one.
+                    </div>
                   )}
                 </div>
+              </div>
+            ) : (
+              <div className="bg-[#0a0a0a] border border-neutral-800 rounded-xl p-8">
+                {editingId && (
+                  <div className="flex justify-between items-center mb-6 pb-6 border-b border-neutral-800">
+                    <h3 className="text-lg font-medium text-white">Editing Record</h3>
+                    <button 
+                      onClick={() => { setEditingId(null); setFormData(getInitialFormState(formType)); setActiveTab('manage'); }}
+                      className="text-sm text-neutral-400 hover:text-white"
+                    >
+                      Cancel Edit
+                    </button>
+                  </div>
+                )}
 
-                <form onSubmit={handleFormSubmit} className="space-y-6 max-w-3xl">
+                <form onSubmit={handleFormSubmit} className="space-y-6">
                   
                   {/* Dynamic Fields for PROJECTS */}
                   {formType === 'projects' && (
                     <>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Project Title</label>
-                        <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Project Title</label>
+                        <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Category</label>
-                        <input required type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. AI & Automation" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Category</label>
+                        <input required type="text" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. AI & Automation" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Description</label>
-                        <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm h-32 resize-none" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Description</label>
+                        <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all h-28 resize-none" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Tech Stack <span className="text-white/30 text-xs font-normal">(comma separated)</span></label>
-                        <input type="text" value={formData.tech} onChange={e => setFormData({...formData, tech: e.target.value})} placeholder="Python, YOLOv8, OpenCV" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Tech Stack <span className="text-neutral-600 normal-case">(comma separated)</span></label>
+                        <input type="text" value={formData.tech} onChange={e => setFormData({...formData, tech: e.target.value})} placeholder="Python, YOLOv8, OpenCV" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-white/70 text-sm font-medium">Repository URL <span className="text-white/30 text-xs font-normal">(Optional)</span></label>
-                          <input type="text" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://github.com/..." className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                        <div className="space-y-1.5">
+                          <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Repository URL <span className="text-neutral-600 normal-case">(Optional)</span></label>
+                          <input type="text" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="https://github.com/..." className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-white/70 text-sm font-medium">Live URL <span className="text-white/30 text-xs font-normal">(Optional)</span></label>
-                          <input type="text" value={formData.liveUrl || ''} onChange={e => setFormData({...formData, liveUrl: e.target.value})} placeholder="https://your-demo.com" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                        <div className="space-y-1.5">
+                          <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Live URL <span className="text-neutral-600 normal-case">(Optional)</span></label>
+                          <input type="text" value={formData.liveUrl || ''} onChange={e => setFormData({...formData, liveUrl: e.target.value})} placeholder="https://your-demo.com" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                         </div>
                       </div>
                     </>
@@ -1020,38 +1222,48 @@ const AdminPanel = () => {
                   {/* Dynamic Fields for BLOG */}
                   {formType === 'blog' && (
                     <>
-                      <div className="space-y-4 bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Sparkles className="w-4 h-4 text-white/70" />
-                          <h4 className="text-white font-medium text-sm">Auto-Generate Metadata</h4>
+                      <div className="bg-[#050505] border border-neutral-800 rounded-md p-5 mb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="w-4 h-4 text-blue-400" />
+                          <h4 className="text-white text-sm font-medium">AI Content Analyzer</h4>
                         </div>
-                        <p className="text-xs text-white/50 mb-4">Paste full article content below to automatically generate the excerpt, tags, and read time.</p>
-                        <textarea className="w-full bg-[#050505] border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all h-24 resize-none" placeholder="Paste article content..." />
-                        <button type="button" onClick={simulateAISummary} disabled={isGenerating} className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition-all disabled:opacity-50">
+                        <p className="text-xs text-neutral-500 mb-4">Paste article content to auto-generate excerpt, tags, and read time.</p>
+                        <textarea 
+                          className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all h-20 resize-none mb-3" 
+                          placeholder="Paste raw article content..." 
+                          value={rawContent}
+                          onChange={(e) => setRawContent(e.target.value)}
+                        />
+                        <button 
+                          type="button" 
+                          onClick={handleAIGeneration} 
+                          disabled={isGenerating || !rawContent} 
+                          className="px-4 py-2 bg-blue-500/10 text-blue-400 rounded-md text-xs font-medium transition-all hover:bg-blue-500/20 disabled:opacity-50 flex items-center justify-center"
+                        >
                           {isGenerating ? 'Processing...' : 'Generate Metadata'}
                         </button>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Article Title</label>
-                        <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Article Title</label>
+                        <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
                       <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-white/70 text-sm font-medium">Date <span className="text-white/30 text-xs font-normal">(Optional)</span></label>
-                          <input type="text" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} placeholder="e.g. March 2026" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                        <div className="space-y-1.5">
+                          <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Date <span className="text-neutral-600 normal-case">(Optional)</span></label>
+                          <input type="text" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} placeholder="e.g. March 2026" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-white/70 text-sm font-medium">Read Time</label>
-                          <input type="text" value={formData.readTime} onChange={e => setFormData({...formData, readTime: e.target.value})} placeholder="e.g. 5 min read" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                        <div className="space-y-1.5">
+                          <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Read Time</label>
+                          <input type="text" value={formData.readTime} onChange={e => setFormData({...formData, readTime: e.target.value})} placeholder="e.g. 5 min read" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Excerpt</label>
-                        <textarea required value={formData.excerpt} onChange={e => setFormData({...formData, excerpt: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm h-24 resize-none" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Excerpt</label>
+                        <textarea required value={formData.excerpt} onChange={e => setFormData({...formData, excerpt: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all h-24 resize-none" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Tags <span className="text-white/30 text-xs font-normal">(comma separated)</span></label>
-                        <input type="text" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="AutoML, AI, Research" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Tags <span className="text-neutral-600 normal-case">(comma separated)</span></label>
+                        <input type="text" value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="AutoML, AI, Research" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
                     </>
                   )}
@@ -1059,158 +1271,69 @@ const AdminPanel = () => {
                   {/* Dynamic Fields for EXPERIENCE */}
                   {formType === 'experience' && (
                     <>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Role / Job Title</label>
-                        <input required type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Role / Job Title</label>
+                        <input required type="text" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Company / Organization</label>
-                        <input required type="text" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Company / Organization</label>
+                        <input required type="text" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Period</label>
-                        <input required type="text" value={formData.period} onChange={e => setFormData({...formData, period: e.target.value})} placeholder="Jan 2026 - Present" className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Period</label>
+                        <input required type="text" value={formData.period} onChange={e => setFormData({...formData, period: e.target.value})} placeholder="Jan 2026 - Present" className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-white/70 text-sm font-medium">Description</label>
-                        <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-transparent border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all text-sm h-32 resize-none" />
+                      <div className="space-y-1.5">
+                        <label className="text-neutral-400 text-xs font-medium uppercase tracking-wide">Description</label>
+                        <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-[#111] border border-neutral-800 rounded-md px-3 py-2.5 text-sm text-white focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all h-28 resize-none" />
                       </div>
                     </>
                   )}
 
-                  <div className="pt-4 border-t border-white/10 mt-8">
+                  <div className="pt-6 border-t border-neutral-800 mt-8">
                     <button
                       type="submit"
-                      className="px-6 py-3 bg-white text-black font-semibold text-sm rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                      className="px-6 py-2.5 bg-white text-black font-medium text-sm rounded-md hover:bg-neutral-200 transition-colors flex items-center gap-2"
                     >
-                      {editingId ? 'Save Changes' : 'Publish Record'}
+                      {editingId ? 'Save Changes' : 'Create Record'}
                     </button>
                   </div>
                 </form>
               </div>
             )}
 
-            {activeTab === 'manage' && (
-              <div className="relative z-10">
-                <div className="flex gap-2 mb-6 border-b border-white/5 pb-4">
-                  {['projects', 'blog', 'experience'].map(type => (
-                    <button
-                      key={type}
-                      onClick={() => setManageType(type)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-all ${
-                        manageType === type ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  {data[manageType]?.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-4 bg-transparent border border-white/10 rounded-xl hover:border-white/30 transition-all group">
-                      <div className="truncate pr-6">
-                        <h4 className="text-white text-sm font-medium truncate flex items-center gap-3">
-                          {item.title || item.role}
-                          {item.liveUrl && <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-400 text-[10px] font-medium tracking-wide">Live</span>}
-                        </h4>
-                        <p className="text-white/40 text-xs truncate mt-1">{item.description || item.excerpt || item.company}</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={() => handleEditClick(manageType, item)}
-                          className="p-2 bg-white/5 hover:bg-white/20 text-white rounded-md transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(manageType, item.id)}
-                          className="p-2 bg-white/5 hover:bg-red-500/20 text-red-400 rounded-md transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {data[manageType]?.length === 0 && (
-                    <div className="text-center py-12 bg-transparent border border-white/10 rounded-xl border-dashed">
-                      <p className="text-white/40 text-sm">No records found for {manageType}.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
           </div>
-        </FadeIn>
-      </div>
-    </div>
-  );
-};
-
-const VoiceAgent = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-
-  return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-      {isOpen && (
-        <div className="mb-4 w-72 bg-[#0a0a0a]/90 backdrop-blur-xl border border-white/20 rounded-2xl p-6 shadow-2xl animate-fade-down origin-bottom-right">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-xs font-bold tracking-widest uppercase text-white/60">Voice Assistant</span>
-          </div>
-          <p className="text-sm text-white/80 leading-relaxed mb-6">
-            "Hi, I'm Nandan's AI agent. Ask me about his projects, tech stack, or experience."
-          </p>
-          <button 
-            onClick={() => setIsListening(!isListening)}
-            className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${
-              isListening ? 'bg-red-500/20 text-red-500 border border-red-500/50' : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            <Mic className="w-4 h-4" />
-            <span className="text-xs font-bold tracking-widest uppercase">
-              {isListening ? 'Listening...' : 'Hold to Speak'}
-            </span>
-          </button>
         </div>
-      )}
-
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 transition-transform"
-      >
-        {isOpen ? <X className="w-6 h-6 text-black" /> : <Mic className="w-6 h-6 text-black" />}
-      </button>
+      </main>
     </div>
   );
 };
-
-export default function App() {
-  return (
-    <AppProvider>
-      <MainLayout />
-    </AppProvider>
-  );
-}
 
 const MainLayout = () => {
-  const { currentPath, isAdmin, navigate } = useContext(AppContext);
+  const { currentPath, navigate } = useContext(AppContext);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-white/20 font-sans">
       
-      {/* Top Left Logo */}
+      {/* Top Left Logo with Smart Image Fallback */}
       {currentPath !== 'admin' && (
-        <div className="fixed top-6 left-6 sm:left-10 z-50">
-          <div className="px-4 py-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] cursor-pointer">
-            <span className="text-white font-bold tracking-widest uppercase text-sm sm:text-base drop-shadow-md">
+        <div 
+          onClick={() => navigate('home')}
+          className="fixed top-6 left-6 sm:left-10 z-50 flex items-center justify-center min-w-[60px] min-h-[40px] px-4 py-2 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] cursor-pointer hover:bg-white/20 transition-colors group"
+        >
+          {!imgError ? (
+            <img 
+              src="logo.png" 
+              alt="NJ Logo" 
+              className="h-6 w-auto object-contain group-hover:scale-105 transition-transform"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span className="text-white font-bold tracking-widest uppercase text-sm sm:text-base drop-shadow-md group-hover:scale-105 transition-transform">
               NJ.
             </span>
-          </div>
+          )}
         </div>
       )}
 
@@ -1226,9 +1349,6 @@ const MainLayout = () => {
         {currentPath === 'contact' && <Contact />}
         {currentPath === 'admin' && <AdminPanel />}
       </main>
-
-      {/* Global AI Assistant */}
-      {currentPath !== 'admin' && <VoiceAgent />}
 
       {/* Footer */}
       {currentPath !== 'admin' && currentPath !== 'home' && (
@@ -1254,3 +1374,11 @@ const MainLayout = () => {
     </div>
   );
 };
+
+export default function App() {
+  return (
+    <AppProvider>
+      <MainLayout />
+    </AppProvider>
+  );
+}
