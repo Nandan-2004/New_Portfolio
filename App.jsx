@@ -58,6 +58,17 @@ const initialData = {
       tech: ['ESP32', 'IoT', 'Machine Learning', 'C++', 'Python'],
       highlights: ['S4SD Conference Paper', 'Real-time Sensor Telemetry', 'ML Anomaly Detection'],
       metrics: { platform: 'ESP32 IoT', paper: 'S4SD Conference', feature: 'Leak Detection' }
+    },
+    {
+      id: 6,
+      title: 'RecipeAI — AI Recipe Maker & Pantry Matcher',
+      category: 'AI & Automation',
+      description: 'Intelligent recipe recommendation engine and kitchen pantry matcher with 5,900+ indexed recipes, cuisine filters, and generative AI chef assistant.',
+      details: 'Solves the daily dilemma of "What can I cook?" by computing real-time ingredient matches across 5,928 recipes. Features interactive pantry inventory management, dietary filters, and a generative SLM chef assistant for custom recipe synthesis.',
+      tech: ['React', 'FastAPI', 'Python', 'TailwindCSS', 'PEFT / QLoRA', 'Hugging Face'],
+      highlights: ['5,928 Indexed Recipes', 'Pantry Match Engine', 'Generative AI Chef Assistant'],
+      metrics: { database: '5,928 Recipes', latency: '< 50ms', demo: '/ai-recipe-maker' },
+      liveUrl: '/ai-recipe-maker'
     }
   ],
   experience: [
@@ -373,6 +384,16 @@ const Home = () => {
           </button>
         </div>
 
+        {/* Live System Status Pill */}
+        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs font-mono text-slate-300 mt-8 backdrop-blur-xl animate-fade-rise delay-300 shadow-lg">
+          <span className="text-cyan-400">$</span>
+          <span className="text-slate-400">system status:</span>
+          <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            Active • Govt Infrastructure & ML Solutions
+          </span>
+        </div>
+
         {/* Live Metrics Showcase Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-16 sm:mt-24 w-full max-w-4xl animate-fade-rise delay-300">
           <div className="glass-card p-4 sm:p-6 rounded-2xl border border-white/10 text-center group hover:border-cyan-500/40 transition-colors">
@@ -620,7 +641,7 @@ const Projects = () => {
           <FadeIn key={project.id} delay={index * 100} className="h-full">
             <div 
               onClick={() => setSelectedProject(project)}
-              className="glass-card glass-card-hover rounded-2xl p-6 sm:p-7 flex flex-col justify-between h-full cursor-pointer relative overflow-hidden group shadow-xl"
+              className="glass-card glass-card-hover card-sheen rounded-2xl p-6 sm:p-7 flex flex-col justify-between h-full cursor-pointer relative overflow-hidden group shadow-xl"
             >
               <div className="absolute top-0 right-0 w-28 h-28 bg-cyan-500/5 rounded-bl-full pointer-events-none group-hover:bg-cyan-500/10 transition-colors" />
 
@@ -635,9 +656,22 @@ const Projects = () => {
                   {project.title}
                 </h3>
 
-                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-6 line-clamp-3 font-light">
+                <p className="text-slate-400 text-xs sm:text-sm leading-relaxed mb-4 line-clamp-3 font-light">
                   {project.description}
                 </p>
+
+                {/* Key Metric Pills directly on card */}
+                {project.metrics && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {Object.entries(project.metrics).slice(0, 2).map(([key, val]) => (
+                      <span key={key} className="px-2.5 py-0.5 rounded bg-cyan-950/40 border border-cyan-500/25 text-[10px] font-mono text-cyan-300 flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-cyan-400" />
+                        <span className="text-slate-400 uppercase text-[9px]">{key}:</span>
+                        <span className="font-semibold text-slate-200">{val}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -738,7 +772,17 @@ const Projects = () => {
               </div>
             </div>
 
-            <div className="p-4 bg-slate-950 border-t border-white/10 flex justify-end">
+            <div className="p-4 bg-slate-950 border-t border-white/10 flex items-center justify-between gap-3">
+              {selectedProject.liveUrl ? (
+                <a
+                  href={selectedProject.liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-400 text-black font-mono text-xs uppercase font-bold tracking-widest rounded-xl hover:opacity-95 transition-opacity flex items-center gap-2 shadow-[0_0_15px_rgba(52,211,153,0.3)]"
+                >
+                  Launch App <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              ) : <div />}
               <button 
                 onClick={() => setSelectedProject(null)}
                 className="px-6 py-2.5 bg-gradient-to-r from-cyan-400 to-teal-300 text-black font-mono text-xs uppercase font-bold tracking-widest rounded-xl hover:opacity-90 transition-opacity"
