@@ -1,0 +1,5 @@
+# Robots.txt for Nandan Javagal Portfolio
+User-agent: *
+Allow: /
+
+Sitemap: https://nandanjavagal.in/sitemap.xml
